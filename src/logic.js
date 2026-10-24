@@ -30,8 +30,19 @@ function outreachText(clientRef, flags) {
   if (flags.includes("missed_draft")) bits.push("we noticed a recent scheduled deposit did not come through");
   if (flags.includes("short_draft")) bits.push("we noticed a recent deposit was lower than planned");
   if (flags.includes("settlement_funding_risk")) bits.push("an upcoming settlement payment is approaching and we want to make sure the account is ready in time");
+  if (flags.includes("draft_before_payday")) bits.push("the deposit date sits just before your usual payday and may be worth reviewing");
   const reason = bits.length ? bits.join(", and ") : "we are doing a routine check-in on your program account";
   return "Hello " + (clientRef || "there") + ", this is a friendly reminder from your program team. We are writing because " + reason + ". When you have a moment, please contact us so we can review your deposit schedule together and make any helpful adjustments. Thank you.";
+}
+
+/** True when a draft lands 1–3 days before the client's pay day (1–31). */
+function paydayHint(draftDate, paydayDay) {
+  const payday = Number(paydayDay);
+  if (!paydayDay || payday < 1 || payday > 31) return false;
+  const d = parseDate(draftDate);
+  if (!d) return false;
+  const gap = (payday - d.getUTCDate() + 31) % 31;
+  return gap >= 1 && gap <= 3;
 }
 function analyzeRow(row, config) {
   const cfg = config || {};
@@ -53,7 +64,9 @@ function analyzeRow(row, config) {
     if (shortfall > 0 && daysToImpact !== null && daysToImpact <= windowDays) flags.push("settlement_funding_risk");
   }
   const projectedShortfall = shortfall;
-  return { clientRef: row.client_ref || "", draftDate: row.draft_date || "", expectedAmount: expected, actualAmount: actual, currentBalance: balance, nextSettlementDate: row.next_settlement_date || "", nextSettlementAmount: settleAmount, daysToImpact: daysToImpact === null ? Infinity : daysToImpact, flags, projectedShortfall, outreach: flags.length ? outreachText(row.client_ref, flags) : "" };
+  const payDay = row.payday_day || (config && config.paydayDay);
+  if (paydayHint(row.draft_date, payDay)) flags.push("draft_before_payday");
+  return { clientRef: row.client_ref || "", draftDate: row.draft_date || "", expectedAmount: expected, actualAmount: actual, currentBalance: balance, nextSettlementDate: row.next_settlement_date || "", nextSettlementAmount: settleAmount, daysToImpact: daysToImpact === null ? Infinity : daysToImpact, flags, projectedShortfall, paydayDay: payDay || "", outreach: flags.length ? outreachText(row.client_ref, flags) : "" };
 }
 function analyzeRows(rows, config) {
   const queue = (rows || []).map(r => analyzeRow(r, config)).filter(c => c.flags.length);
@@ -69,6 +82,6 @@ function summarize(rows, queue, config) {
   return { totalClients: total, draftSuccessRate: total ? round2(successful * 100 / total) : 0, totalExpected, totalActual, atRiskSettlements: (queue || []).filter(c => c.flags.includes("settlement_funding_risk")).length, flaggedClients: (queue || []).length };
 }
 function toQueueCSV(queue) { return toCSV(["client_ref","days_to_impact","flags","projected_shortfall","next_settlement_date","next_settlement_amount","outreach"], (queue||[]).map(c => ({ client_ref: c.clientRef, days_to_impact: c.daysToImpact === Infinity ? "" : c.daysToImpact, flags: c.flags.join("; "), projected_shortfall: c.projectedShortfall, next_settlement_date: c.nextSettlementDate, next_settlement_amount: c.nextSettlementAmount, outreach: c.outreach }))); }
-const api = { parseCSV, analyzeRow, analyzeRows, summarize, outreachText, toQueueCSV };
+const api = { parseCSV, analyzeRow, analyzeRows, summarize, outreachText, toQueueCSV, paydayHint };
 if (typeof module !== "undefined" && module.exports) { module.exports = api; }
 if (typeof window !== "undefined") { window.DedicatedAccountDriftAlerts = api; }
