@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dedicated Account Drift Alerts: Catch failed drafts before a settlement bounces</title>
+<meta name="description" content="Reconcile expected versus actual dedicated-account drafts, flag clients drifting toward a failed settlement, and work a queue ranked by days to impact.">
+<meta name="keywords" content="dedicated account reconciliation, debt settlement draft alerts, failed draft tracker, settlement funding risk, dedicated savings account">
+<meta name="author" content="Amir Hussain">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://aamirtechs.github.io/dedicated-account-drift-alerts/">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="theme-color" content="#0b1f3a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Dedicated Account Drift Alerts">
+<meta property="og:description" content="Reconcile expected versus actual dedicated-account drafts, flag clients drifting toward a failed settlement, and work a queue ranked by days to impact.">
+<meta property="og:url" content="https://aamirtechs.github.io/dedicated-account-drift-alerts/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dedicated Account Drift Alerts">
+<meta name="twitter:description" content="Reconcile expected versus actual dedicated-account drafts, flag clients drifting toward a failed settlement, and work a queue ranked by days to impact.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Dedicated Account Drift Alerts", "applicationCategory": "BusinessApplication", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Amir Hussain", "url": "https://aamirtechs.com"}, "url": "https://aamirtechs.github.io/dedicated-account-drift-alerts/", "description": "Reconcile expected versus actual dedicated-account drafts, flag clients drifting toward a failed settlement, and work a queue ranked by days to impact."}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+:root{--navy:#0b1f3a;--navy2:#122c50;--gold:#d4a72c;--ink:#16233a;--muted:#5a6a84;--line:#e3e9f2;--bg:#f6f8fb;--card:#ffffff}
+header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:44px 20px 34px;text-align:center}
+header h1{font-family:'Sora',sans-serif;font-size:2rem;margin:0 0 10px}header h1 span{color:var(--gold)}
+header p{max-width:760px;margin:0 auto 16px;color:#dbe4f2}
+.stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.stats span{border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 14px;font-size:.85rem}
+main{max-width:980px;margin:-18px auto 0;padding:0 16px 30px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 8px 30px rgba(11,31,58,.08)}
+label{display:block;font-weight:700;font-size:.9rem;margin:14px 0 6px}
+textarea,input[type=text],input[type=number],select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+textarea{min-height:130px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.btn-run{background:var(--gold);color:var(--navy);border:0;border-radius:9px;padding:12px 22px;font-weight:800;cursor:pointer;font-size:1rem;margin-top:16px}
+.btn-sub{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;margin:8px 8px 0 0}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.87rem}th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}th{background:var(--navy);color:#fff}
+.flag{color:#b3261e;font-weight:700}.ok{color:#137333;font-weight:700}.stop{color:#fff;background:#b3261e;font-weight:800;padding:2px 8px;border-radius:6px}
+pre{background:#0b1f3a;color:#e8eef8;border-radius:10px;padding:14px;overflow:auto;font-size:.82rem;white-space:pre-wrap;word-break:break-word}
+.privacy{color:var(--muted);font-size:.9rem;margin-top:14px}.small{font-size:.85rem;color:var(--muted)}
+section.how{max-width:980px;margin:22px auto;padding:0 16px}section.how h2{font-family:'Sora',sans-serif}
+footer{background:var(--navy);color:#dbe4f2;text-align:center;padding:24px 16px;margin-top:30px;font-size:.92rem}footer a{color:var(--gold)}
+</style>
+</head>
+<body>
+<header><h1>Dedicated Account <span>Drift Alerts</span></h1><p>Reconcile expected versus actual dedicated-account drafts, flag clients drifting toward a failed settlement, and work a queue ranked by days to impact.</p><div class="stats"><span>Free</span><span>100% in your browser</span><span>No sign-up</span></div></header>
+<main><div class="card">
+<label for="fileInput">Upload a draft ledger CSV</label><input type="file" id="fileInput" accept=".csv,text/csv,text/plain">
+<label for="csvInput">Or paste CSV here</label>
+<textarea id="csvInput">client_ref,draft_date,expected_amount,actual_amount,current_balance,next_settlement_date,next_settlement_amount
+Client 001,2026-01-01,300,300,400,2026-01-08,1500
+Client 002,2026-01-01,300,,5000,2026-02-01,1000
+Client 003,2026-01-01,300,250,2000,2026-03-01,1500</textarea>
+<div class="row">
+<div><label for="thresh">Short-draft threshold percent</label><input type="number" id="thresh" value="10"></div>
+<div><label for="win">Settlement risk window (days)</label><input type="number" id="win" value="14"></div>
+<div><label for="refDate">Reference date</label><input type="text" id="refDate" value="2026-01-01"></div>
+</div>
+<button class="btn-run" id="runBtn">Build work queue</button>
+<div id="summary" class="small" style="margin-top:12px"></div><div id="results"></div>
+<button class="btn-sub" id="dlBtn" type="button" style="display:none">Download work-queue CSV</button>
+<p class="small">Outreach text is a neutral reminder only. It uses no collection tactics. Synthetic clients only.</p>
+<p class="privacy">Runs 100% in your browser. Your files never leave this device.</p>
+</div></main>
+<section class="how"><h2>How it works</h2><ul><li>Per-client drift flags: missed drafts (blank or zero actual amount), short drafts beyond a configurable threshold percent, and balances below the next settlement amount.</li><li>Settlement funding risk: flags a projected shortfall by the settlement date, assuming no further drafts, when the settlement falls inside a configurable days-ahead window.</li><li>Save-the-settlement work queue ranked by days to impact (days until the next settlement), not by balance, each with neutral, polite outreach task text.</li><li>Weekly summary stats: draft success rate, total expected versus actual drafts, and the count of at-risk settlements, plus a downloadable work-queue CSV.</li></ul></section>
+<footer>
+  <p>Built by Amir Hussain, operations manager and founder of <a href="https://aamirtechs.com" target="_blank" rel="noopener">AamirTechs: operations, customer support and e-commerce services</a>.</p>
+  <p><a href="https://github.com/aamirtechs" target="_blank" rel="noopener">More open source tools on GitHub</a></p>
+</footer>
+<script src="src/logic.js"></script>
+<script>
+var L=window.DedicatedAccountDriftAlerts, lastQ=null;
+function esc(s){return String(s).replace(/</g,"&lt;");}
+function run(){ var rows=L.parseCSV(document.getElementById("csvInput").value); var cfg={thresholdPercent:Number(document.getElementById("thresh").value)||10, windowDays:Number(document.getElementById("win").value)||14, referenceDate:document.getElementById("refDate").value||"2026-01-01"};
+ lastQ=L.analyzeRows(rows,cfg); var s=L.summarize(rows,lastQ,cfg);
+ document.getElementById("summary").textContent="Weekly summary: "+s.totalClients+" clients, draft success rate "+s.draftSuccessRate+"%, expected "+s.totalExpected+" vs actual "+s.totalActual+", at-risk settlements: "+s.atRiskSettlements+", flagged clients: "+s.flaggedClients+".";
+ var h="<table><tr><th>Client</th><th>Days to impact</th><th>Flags</th><th>Projected shortfall</th><th>Next settlement</th><th>Outreach task</th></tr>";
+ lastQ.forEach(function(c){h+="<tr><td>"+esc(c.clientRef)+"</td><td>"+(c.daysToImpact===Infinity?"":c.daysToImpact)+"</td><td><span class='flag'>"+esc(c.flags.join(", "))+"</span></td><td>"+c.projectedShortfall+"</td><td>"+esc(c.nextSettlementDate)+" ("+(c.nextSettlementAmount||"")+")</td><td>"+esc(c.outreach)+"</td></tr>";});
+ document.getElementById("results").innerHTML=h+"</table>";
+ document.getElementById("dlBtn").style.display=lastQ.length?"inline-block":"none"; }
+document.getElementById("runBtn").addEventListener("click",run);
+document.getElementById("dlBtn").addEventListener("click",function(){ if(lastQ){var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([L.toQueueCSV(lastQ)],{type:"text/csv"})); a.download="drift-work-queue.csv"; a.click();}});
+document.getElementById("fileInput").addEventListener("change",function(e){var f=e.target.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){document.getElementById("csvInput").value=r.result;}; r.readAsText(f);});
+</script></body></html>
